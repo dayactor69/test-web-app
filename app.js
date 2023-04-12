@@ -1,95 +1,116 @@
-// Initialize Firebase
+// Initialize Firebase SDK with your credentials
 var firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  databaseURL: "YOUR_DATABASE_URL",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
-};
-firebase.initializeApp(firebaseConfig);
-
-// References to DOM elements
-const loginForm = document.querySelector('#login-form');
-const usernameInput = document.querySelector('#username-input');
-const passwordInput = document.querySelector('#password-input');
-const userList = document.querySelector('#user-list');
-const infoCard = document.querySelector('#info-card');
-
-// Listen for login form submit
-loginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
+    apiKey: "AIzaSyC-9tGU77KevhUd4vBui2BMda6KlxDCono",
+    authDomain: "web-app-test-c38e7.firebaseapp.com",
+    databaseURL: "https://web-app-test-c38e7-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "web-app-test-c38e7",
+    storageBucket: "web-app-test-c38e7.appspot.com",
+    messagingSenderId: "836886747933",
+    appId: "1:836886747933:web:b35236779e1607189adff4",
+    measurementId: "G-PNRD3GH0L4"
+  };
+  firebase.initializeApp(firebaseConfig);
   
-  // Get username and password input values
-  const username = usernameInput.value;
-  const password = passwordInput.value;
-
-  // Authenticate user with Firebase Auth
-  firebase.auth().signInWithEmailAndPassword(username, password)
-    .then((userCredential) => {
-      // Clear input fields
-      usernameInput.value = '';
-      passwordInput.value = '';
-
-      // Show user list and info card
-      userList.style.display = 'block';
-      infoCard.style.display = 'block';
-
-      // Display user's email in info card
-      const userEmail = userCredential.user.email;
-      const infoCardText = document.querySelector('#info-card-text');
-      infoCardText.innerText = `Logged in as: ${userEmail}`;
-    })
-    .catch((error) => {
-      // Handle login error
-      const errorMessage = error.message;
-      console.error(errorMessage);
-      alert(errorMessage);
-    });
-});
-
-// Listen for logout button click
-const logoutButton = document.querySelector('#logout-button');
-logoutButton.addEventListener('click', (e) => {
-  e.preventDefault();
+  // Get the registration form element
+  var registrationForm = document.querySelector('form');
   
-  // Sign out user
-  firebase.auth().signOut()
-    .then(() => {
-      // Hide user list and info card
-      userList.style.display = 'none';
-      infoCard.style.display = 'none';
-    })
-    .catch((error) => {
-      // Handle logout error
-      const errorMessage = error.message;
-      console.error(errorMessage);
-      alert(errorMessage);
+  // Add a submit event listener to the form
+  registrationForm.addEventListener('submit', function(event) {
+    // Prevent the default form submission
+    event.preventDefault();
+  
+    // Get the user input from the form
+    var name = document.querySelector('#name').value;
+    var email = document.querySelector('#email').value;
+    var password = document.querySelector('#password').value;
+  
+    // Write the user data to the Firebase database
+    firebase.database().ref('users').push({
+      name: name,
+      email: email,
+      password: password
     });
-});
+  
+    // Display a confirmation message to the user
+    alert('User registered successfully!');
+  });
+  // Get the user list element
+var userList = document.querySelector('#user-list');
 
-// Listen for authentication state changes
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    // User is signed in
-    console.log('User is signed in');
-
-    // Show user list and info card
-    userList.style.display = 'block';
-    infoCard.style.display = 'block';
-
-    // Display user's email in info card
-    const userEmail = user.email;
-    const infoCardText = document.querySelector('#info-card-text');
-    infoCardText.innerText = `Logged in as: ${userEmail}`;
-  } else {
-    // User is signed out
-    console.log('User is signed out');
-
-    // Hide user list and info card
-    userList.style.display = 'none';
-    infoCard.style.display = 'none';
+// Load the user data from the Firebase database
+firebase.database().ref('users').on('value', function(snapshot) {
+  var users = snapshot.val();
+  var userHtml = '';
+  for (var key in users) {
+    userHtml += '<div class="user-card">' +
+                '<h2>' + users[key].name + '</h2>' +
+                '<p><strong>Email:</strong> ' + users[key].email + '</p>' +
+                '</div>';
   }
+  userList.innerHTML = userHtml;
 });
+// Firebase Authentication
+firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // L'utente è autenticato, visualizza la pagina di registrazione
+      document.getElementById("registration-form").style.display = "block";
+    } else {
+      // L'utente non è autenticato, mostra il form di login
+      document.getElementById("login-form").style.display = "block";
+    }
+  });
+  
+  // Login form submission
+  document.getElementById("login-form").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent the page from refreshing
+  
+    // Get user input
+    var email = document.getElementById("email-login").value;
+    var password = document.getElementById("password-login").value;
+  
+    // Sign in the user
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(function(userCredential) {
+        // Hide the login form and show the registration form
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("registration-form").style.display = "block";
+      })
+      .catch(function(error) {
+        // Handle errors here
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        alert("Errore durante il login: " + errorMessage);
+      });
+  });
+  
+  // Registration form submission
+  document.getElementById("registration-form").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent the page from refreshing
+  
+    // Get user input
+    var username = document.getElementById("username").value;
+    var email = document.getElementById("email").value;
+    var password = document.getElementById("password").value;
+  
+    // Create a new user with email and password
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(function(userCredential) {
+        // Save the user data to the database
+        var userId = userCredential.user.uid;
+        var userRef = database.ref("users/" + userId);
+        userRef.set({
+          username: username,
+          email: email
+        });
+  
+        // Clear the registration form
+        document.getElementById("registration-form").reset();
+      })
+      .catch(function(error) {
+        // Handle errors here
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        alert("Errore durante la registrazione: " + errorMessage);
+      });
+  });
+  
